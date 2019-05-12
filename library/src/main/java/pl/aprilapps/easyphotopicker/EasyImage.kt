@@ -118,15 +118,15 @@ class EasyImage private constructor(
 
         if (resultCode == Activity.RESULT_OK) {
             if (requestCode == RequestCodes.PICK_PICTURE_FROM_DOCUMENTS && resultIntent != null) {
-                onPickedExistingPicturesFromLocalStorage(resultIntent, activity, callbacks)
+                onPickedExistingPicturesFromLocalStorage(resultIntent,mediaSource, activity, callbacks)
             } else if (requestCode == RequestCodes.PICK_PICTURE_FROM_GALLERY && resultIntent != null) {
-                onPickedExistingPictures(resultIntent, activity, callbacks)
+                onPickedExistingPictures(resultIntent,mediaSource, activity, callbacks)
             } else if (requestCode == RequestCodes.PICK_PICTURE_FROM_CHOOSER) {
-                onFileReturnedFromChooser(resultIntent, activity, callbacks)
+                onFileReturnedFromChooser(resultIntent,mediaSource, activity, callbacks)
             } else if (requestCode == RequestCodes.TAKE_PICTURE) {
-                onPictureReturnedFromCamera(activity, callbacks)
+                onPictureReturnedFromCamera(activity,mediaSource, callbacks)
             } else if (requestCode == RequestCodes.CAPTURE_VIDEO) {
-                onVideoReturnedFromCamera(activity, callbacks)
+                onVideoReturnedFromCamera(activity,mediaSource, callbacks)
             }
         } else {
             removeCameraFileAndCleanup()
@@ -134,21 +134,21 @@ class EasyImage private constructor(
         }
     }
 
-    private fun onPickedExistingPicturesFromLocalStorage(resultIntent: Intent, activity: Activity, callbacks: Callbacks) {
+    private fun onPickedExistingPicturesFromLocalStorage(resultIntent: Intent,mediaSource: MediaSource, activity: Activity, callbacks: Callbacks) {
         Log.d(EASYIMAGE_LOG_TAG, "Existing picture returned from local storage")
         try {
             val uri = resultIntent.data!!
             val photoFile = Files.pickedExistingPicture(activity, uri)
             val mediaFile = MediaFile(uri, photoFile)
-            callbacks.onMediaFilesPicked(arrayOf(mediaFile), MediaSource.DOCUMENTS)
+            callbacks.onMediaFilesPicked(arrayOf(mediaFile), mediaSource)
         } catch (error: Throwable) {
             error.printStackTrace()
-            callbacks.onImagePickerError(error, MediaSource.DOCUMENTS)
+            callbacks.onImagePickerError(error, mediaSource)
         }
         cleanup()
     }
 
-    private fun onPickedExistingPictures(resultIntent: Intent, activity: Activity, callbacks: Callbacks) {
+    private fun onPickedExistingPictures(resultIntent: Intent,mediaSource: MediaSource, activity: Activity, callbacks: Callbacks) {
         try {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
                 val clipData = resultIntent.clipData
@@ -161,64 +161,64 @@ class EasyImage private constructor(
                         files.add(MediaFile(uri, file))
                     }
                     if (files.isNotEmpty()) {
-                        callbacks.onMediaFilesPicked(files.toTypedArray(), MediaSource.GALLERY)
+                        callbacks.onMediaFilesPicked(files.toTypedArray(), mediaSource)
                     } else {
-                        callbacks.onImagePickerError(EasyImageException("No files were returned from gallery"), MediaSource.GALLERY)
+                        callbacks.onImagePickerError(EasyImageException("No files were returned from gallery"), mediaSource)
                     }
                     cleanup()
                 } else {
-                    onPickedExistingPicturesFromLocalStorage(resultIntent, activity, callbacks)
+                    onPickedExistingPicturesFromLocalStorage(resultIntent,mediaSource, activity, callbacks)
                 }
             } else {
-                onPickedExistingPicturesFromLocalStorage(resultIntent, activity, callbacks)
+                onPickedExistingPicturesFromLocalStorage(resultIntent,mediaSource, activity, callbacks)
             }
         } catch (error: Throwable) {
             cleanup()
             error.printStackTrace()
-            callbacks.onImagePickerError(error, MediaSource.GALLERY)
+            callbacks.onImagePickerError(error, mediaSource)
         }
 
     }
 
-    private fun onPictureReturnedFromCamera(activity: Activity, callbacks: Callbacks) {
+    private fun onPictureReturnedFromCamera(activity: Activity,mediaSource: MediaSource, callbacks: Callbacks) {
         Log.d(EASYIMAGE_LOG_TAG, "Picture returned from camera")
         lastCameraFile?.let { cameraFile ->
             try {
                 if (cameraFile.uri.toString().isEmpty()) Intents.revokeWritePermission(activity, cameraFile.uri)
                 val files = mutableListOf(cameraFile)
                 if (copyImagesToPublicGalleryFolder) Files.copyFilesInSeparateThread(activity, folderName, files.map { it.file })
-                callbacks.onMediaFilesPicked(files.toTypedArray(), MediaSource.CAMERA_IMAGE)
+                callbacks.onMediaFilesPicked(files.toTypedArray(), mediaSource)
             } catch (error: Throwable) {
                 error.printStackTrace()
-                callbacks.onImagePickerError(EasyImageException("Unable to get the picture returned from camera.", error), MediaSource.CAMERA_IMAGE)
+                callbacks.onImagePickerError(EasyImageException("Unable to get the picture returned from camera.", error), mediaSource)
             }
         }
         cleanup()
     }
 
-    private fun onVideoReturnedFromCamera(activity: Activity, callbacks: Callbacks) {
+    private fun onVideoReturnedFromCamera(activity: Activity,mediaSource: MediaSource, callbacks: Callbacks) {
         Log.d(EASYIMAGE_LOG_TAG, "Video returned from camera")
         lastCameraFile?.let { cameraFile ->
             try {
                 if (cameraFile.uri.toString().isEmpty()) Intents.revokeWritePermission(activity, cameraFile.uri)
                 val files = mutableListOf(cameraFile)
                 if (copyImagesToPublicGalleryFolder) Files.copyFilesInSeparateThread(activity, folderName, files.map { it.file })
-                callbacks.onMediaFilesPicked(files.toTypedArray(), MediaSource.CAMERA_VIDEO)
+                callbacks.onMediaFilesPicked(files.toTypedArray(), mediaSource)
             } catch (error: Throwable) {
                 error.printStackTrace()
-                callbacks.onImagePickerError(EasyImageException("Unable to get the picture returned from camera.", error), MediaSource.CAMERA_IMAGE)
+                callbacks.onImagePickerError(EasyImageException("Unable to get the picture returned from camera.", error), mediaSource)
             }
         }
         cleanup()
     }
 
-    private fun onFileReturnedFromChooser(resultIntent: Intent?, activity: Activity, callbacks: Callbacks) {
+    private fun onFileReturnedFromChooser(resultIntent: Intent?,mediaSource: MediaSource, activity: Activity, callbacks: Callbacks) {
         Log.d(EASYIMAGE_LOG_TAG, "File returned from chooser")
         if (resultIntent != null) {
-            onPickedExistingPictures(resultIntent, activity, callbacks)
+            onPickedExistingPictures(resultIntent,mediaSource, activity, callbacks)
             removeCameraFileAndCleanup()
         } else if (lastCameraFile != null) {
-            onPictureReturnedFromCamera(activity, callbacks)
+            onPictureReturnedFromCamera(activity,mediaSource, callbacks)
         }
     }
 
