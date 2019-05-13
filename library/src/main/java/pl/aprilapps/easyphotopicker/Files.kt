@@ -22,7 +22,7 @@ object Files {
     }
 
     private fun generateFileName(): String {
-        return "ei_${System.currentTimeMillis()}"
+        return "${System.currentTimeMillis()}"
     }
 
     private fun writeToFile(inputStream: InputStream, file: File) {
@@ -92,12 +92,12 @@ object Files {
 
     @Throws(IOException::class)
     internal fun pickedExistingPicture(context: Context, photoUri: Uri): File {
-        val pictureInputStream = context.contentResolver.openInputStream(photoUri)
+        /*val pictureInputStream = context.contentResolver.openInputStream(photoUri)
         val directory = tempImageDirectory(context)
-        val photoFile = File(directory, generateFileName() + "." + getMimeType(context, photoUri))
+        val photoFile =
         photoFile.createNewFile()
-        writeToFile(pictureInputStream, photoFile)
-        return photoFile
+        writeToFile(pictureInputStream, photoFile)*/
+        return File(photoUri.path)
     }
 
     /**
@@ -105,20 +105,16 @@ object Files {
      * Solution by http://stackoverflow.com/a/36514823/1171484
      */
     private fun getMimeType(context: Context, uri: Uri): String? {
-        val extension: String?
-
         //Check uri format to avoid null
-        if (uri.scheme == ContentResolver.SCHEME_CONTENT) {
+        return if (uri.scheme == ContentResolver.SCHEME_CONTENT) {
             //If scheme is a content
             val mime = MimeTypeMap.getSingleton()
-            extension = mime.getExtensionFromMimeType(context.contentResolver.getType(uri))
+            mime.getExtensionFromMimeType(context.contentResolver.getType(uri))
         } else {
             //If scheme is a File
             //This will replace white spaces with %20 and also other special characters. This will avoid returning null values on file name with spaces and special characters.
-            extension = MimeTypeMap.getFileExtensionFromUrl(Uri.fromFile(File(uri.path)).toString())
+            MimeTypeMap.getFileExtensionFromUrl(Uri.fromFile(File(uri.path)).toString())
         }
-
-        return extension
     }
 
     private fun getUriToFile(context: Context, file: File): Uri {
