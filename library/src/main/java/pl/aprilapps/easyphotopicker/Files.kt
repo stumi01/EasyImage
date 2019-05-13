@@ -5,6 +5,7 @@ import android.content.Context
 import android.media.MediaScannerConnection
 import android.net.Uri
 import android.os.Environment
+import android.provider.OpenableColumns
 import android.util.Log
 import android.webkit.MimeTypeMap
 import androidx.core.content.FileProvider
@@ -92,12 +93,21 @@ object Files {
 
     @Throws(IOException::class)
     internal fun pickedExistingPicture(context: Context, photoUri: Uri): File {
-        /*val pictureInputStream = context.contentResolver.openInputStream(photoUri)
+        val pictureInputStream = context.contentResolver.openInputStream(photoUri)
         val directory = tempImageDirectory(context)
-        val photoFile =
+        val photoFile = File(directory, getFileName(context,photoUri))
         photoFile.createNewFile()
-        writeToFile(pictureInputStream, photoFile)*/
-        return File(photoUri.path)
+        writeToFile(pictureInputStream, photoFile)
+        return photoFile
+    }
+
+    private fun getFileName(context: Context, photoUri: Uri): String {
+       return context.contentResolver.query(photoUri, null, null, null, null)
+                ?.use {cursor ->
+                    val nameIndex = cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME)
+                    cursor.moveToFirst()
+                    return cursor.getString(nameIndex)
+                } ?: generateFileName() + "." + getMimeType(context,photoUri)
     }
 
     /**
