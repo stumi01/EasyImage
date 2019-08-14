@@ -13,10 +13,14 @@ class EasyImage private constructor(
         private val context: Context,
         private val chooserTitle: String,
         private val folderName: String,
-        private val allowMultiple: Boolean,
+        private var allowMultiple: Boolean,
         private val chooserType: ChooserType,
         private val copyImagesToPublicGalleryFolder: Boolean
 ) {
+
+    fun setAllowMuptiple(allowMultiple: Boolean) {
+        this.allowMultiple = allowMultiple
+    }
 
     private var lastCameraFile: MediaFile? = null
 
@@ -118,15 +122,15 @@ class EasyImage private constructor(
 
         if (resultCode == Activity.RESULT_OK) {
             if (requestCode == RequestCodes.PICK_PICTURE_FROM_DOCUMENTS && resultIntent != null) {
-                onPickedExistingPicturesFromLocalStorage(resultIntent,mediaSource, activity, callbacks)
+                onPickedExistingPicturesFromLocalStorage(resultIntent, mediaSource, activity, callbacks)
             } else if (requestCode == RequestCodes.PICK_PICTURE_FROM_GALLERY && resultIntent != null) {
-                onPickedExistingPictures(resultIntent,mediaSource, activity, callbacks)
+                onPickedExistingPictures(resultIntent, mediaSource, activity, callbacks)
             } else if (requestCode == RequestCodes.PICK_PICTURE_FROM_CHOOSER) {
-                onFileReturnedFromChooser(resultIntent,mediaSource, activity, callbacks)
+                onFileReturnedFromChooser(resultIntent, mediaSource, activity, callbacks)
             } else if (requestCode == RequestCodes.TAKE_PICTURE) {
-                onPictureReturnedFromCamera(activity,mediaSource, callbacks)
+                onPictureReturnedFromCamera(activity, mediaSource, callbacks)
             } else if (requestCode == RequestCodes.CAPTURE_VIDEO) {
-                onVideoReturnedFromCamera(activity,mediaSource, callbacks)
+                onVideoReturnedFromCamera(activity, mediaSource, callbacks)
             }
         } else {
             removeCameraFileAndCleanup()
@@ -134,7 +138,7 @@ class EasyImage private constructor(
         }
     }
 
-    private fun onPickedExistingPicturesFromLocalStorage(resultIntent: Intent,mediaSource: MediaSource, activity: Activity, callbacks: Callbacks) {
+    private fun onPickedExistingPicturesFromLocalStorage(resultIntent: Intent, mediaSource: MediaSource, activity: Activity, callbacks: Callbacks) {
         Log.d(EASYIMAGE_LOG_TAG, "Existing picture returned from local storage")
         try {
             val uri = resultIntent.data!!
@@ -148,7 +152,7 @@ class EasyImage private constructor(
         cleanup()
     }
 
-    private fun onPickedExistingPictures(resultIntent: Intent,mediaSource: MediaSource, activity: Activity, callbacks: Callbacks) {
+    private fun onPickedExistingPictures(resultIntent: Intent, mediaSource: MediaSource, activity: Activity, callbacks: Callbacks) {
         try {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
                 val clipData = resultIntent.clipData
@@ -167,10 +171,10 @@ class EasyImage private constructor(
                     }
                     cleanup()
                 } else {
-                    onPickedExistingPicturesFromLocalStorage(resultIntent,mediaSource, activity, callbacks)
+                    onPickedExistingPicturesFromLocalStorage(resultIntent, mediaSource, activity, callbacks)
                 }
             } else {
-                onPickedExistingPicturesFromLocalStorage(resultIntent,mediaSource, activity, callbacks)
+                onPickedExistingPicturesFromLocalStorage(resultIntent, mediaSource, activity, callbacks)
             }
         } catch (error: Throwable) {
             cleanup()
@@ -180,7 +184,7 @@ class EasyImage private constructor(
 
     }
 
-    private fun onPictureReturnedFromCamera(activity: Activity,mediaSource: MediaSource, callbacks: Callbacks) {
+    private fun onPictureReturnedFromCamera(activity: Activity, mediaSource: MediaSource, callbacks: Callbacks) {
         Log.d(EASYIMAGE_LOG_TAG, "Picture returned from camera")
         lastCameraFile?.let { cameraFile ->
             try {
@@ -196,7 +200,7 @@ class EasyImage private constructor(
         cleanup()
     }
 
-    private fun onVideoReturnedFromCamera(activity: Activity,mediaSource: MediaSource, callbacks: Callbacks) {
+    private fun onVideoReturnedFromCamera(activity: Activity, mediaSource: MediaSource, callbacks: Callbacks) {
         Log.d(EASYIMAGE_LOG_TAG, "Video returned from camera")
         lastCameraFile?.let { cameraFile ->
             try {
@@ -212,13 +216,13 @@ class EasyImage private constructor(
         cleanup()
     }
 
-    private fun onFileReturnedFromChooser(resultIntent: Intent?,mediaSource: MediaSource, activity: Activity, callbacks: Callbacks) {
+    private fun onFileReturnedFromChooser(resultIntent: Intent?, mediaSource: MediaSource, activity: Activity, callbacks: Callbacks) {
         Log.d(EASYIMAGE_LOG_TAG, "File returned from chooser")
         if (resultIntent != null) {
-            onPickedExistingPictures(resultIntent,mediaSource, activity, callbacks)
+            onPickedExistingPictures(resultIntent, mediaSource, activity, callbacks)
             removeCameraFileAndCleanup()
         } else if (lastCameraFile != null) {
-            onPictureReturnedFromCamera(activity,mediaSource, callbacks)
+            onPictureReturnedFromCamera(activity, mediaSource, callbacks)
         }
     }
 
